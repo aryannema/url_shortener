@@ -1,0 +1,28 @@
+{
+  "name": "url_shorten",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --watch index",
+    "start": "node index"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.0.9",
+      "onFail": "download"
+    }
+  },
+  "type": "module",
+  "devDependencies": {
+    "@types/express": "~4.17.25",
+    "@types/node": "^25.9.1"
+  },
+  "dependencies": {
+    "express": "~4.22.2"
+  }
+}
