@@ -39,4 +39,29 @@ router.post("/shorten", ensureAuthenticated, async function (req, res) {
   });
 });
 
+router.get("/codes", ensureAuthenticated, async function (req, res) {
+  const codes = await db
+    .select()
+    .from(urlsTable)
+    .where(eq(urlsTable.userId, req.user.id));
+
+  return res.json({ codes });
+});
+
+router.get("/:shortCode", async function (req, res) {
+  const code = req.params.shortCode;
+  const [result] = await db
+    .select({
+      targetURL: urlsTable.targetURL,
+    })
+    .from(urlsTable)
+    .where(eq(urlsTable.shortCode, code));
+
+  if (!result) {
+    return res.status(404).json({ error: "Invalid url" });
+  }
+
+  return res.redirect(result.targetURL);
+});
+
 export default router;
