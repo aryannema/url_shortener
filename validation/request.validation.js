@@ -16,3 +16,12 @@ export const shortenPostRequestBodySchema = z.object({
   url: z.string().url(),
   code: z.string().optional(),
 });
+
+export const updateURLRequestBodySchema = z
+  .object({
+    url: z.string().url().optional(),
+    code: z.string().optional(),
+  })
+  .refine((data) => data.url !== undefined || data.code !== undefined, {
+    message: "At least one of url or code must be provided",
+  });

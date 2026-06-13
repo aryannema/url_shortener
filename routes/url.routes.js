@@ -1,9 +1,13 @@
 import express from "express";
-import { shortenPostRequestBodySchema } from "../validation/request.validation.js";
+import {
+  shortenPostRequestBodySchema,
+  updateURLRequestBodySchema,
+} from "../validation/request.validation.js";
 import { nanoid } from "nanoid";
 import { db } from "../db/index.js";
 import { urlsTable } from "../models/index.js";
 import { ensureAuthenticated } from "../middlewares/auth.middleware.js";
+import { and, eq } from "drizzle-orm";
 
 const router = express.Router();
 
@@ -46,6 +50,44 @@ router.get("/codes", ensureAuthenticated, async function (req, res) {
     .where(eq(urlsTable.userId, req.user.id));
 
   return res.json({ codes });
+});
+
+router.delete("/:id", ensureAuthenticated, async function (req, res) {
+  const id = req.params.id;
+  const result = await db
+    .delete(urlsTable)
+    .where(and(eq(urlsTable.id, id), eq(urlsTable.userId, req.user.id)));
+
+  return res.status(200).json({ deleted: true });
+});
+
+router.patch("/:id", ensureAuthenticated, async function (req, res) {
+  const validationResult = await updateURLRequestBodySchema.safeParseAsync(
+    req.body,
+  );
+
+  if (validationResult.error)
+    return res.status(400).json({ error: validationResult.error.format() });
+
+  const { url, code } = validationResult.data;
+
+  const [updated] = await db
+    .update(urlsTable)
+    .set({
+      ...(url && { targetURL: url }),
+      ...(code && { shortCode: code }),
+    })
+    .where(and(eq(urlsTable.id, req.params.id), eq(urlsTable.userId, req.user.id)))
+    .returning({
+      id: urlsTable.id,
+      shortCode: urlsTable.shortCode,
+      targetURL: urlsTable.targetURL,
+    });
+
+  if (!updated)
+    return res.status(404).json({ error: "URL not found or not owned by you" });
+
+  return res.json(updated);
 });
 
 router.get("/:shortCode", async function (req, res) {
