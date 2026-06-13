@@ -34,7 +34,7 @@ export function ensureAuthenticated(req, res, next) {
   if (!req.user || !req.user.id) {
     return res
       .status(401)
-      .json({ error: "You ,ust be logged in to access this resource" });
+      .json({ error: "You must be logged in to access this resource" });
   }
 
   next();

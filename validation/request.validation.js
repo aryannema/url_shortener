@@ -1,8 +1,8 @@
-import { email, z } from "zod";
+import { z } from "zod";
 
 export const signupPostRequestBodySchema = z.object({
-  firsname: z.string(),
-  lastname: z.string().optional(),
+  firstName: z.string(),
+  lastName: z.string().optional(),
   email: z.string().email(),
   password: z.string().min(3),
 });

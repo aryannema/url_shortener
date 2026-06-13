@@ -5,13 +5,14 @@ import {
 } from "../validation/request.validation.js";
 import { nanoid } from "nanoid";
 import { db } from "../db/index.js";
-import { urlsTable } from "../models/index.js";
+import { urlsTable, clicksTable } from "../models/index.js";
 import { ensureAuthenticated } from "../middlewares/auth.middleware.js";
+import { shortenRateLimit } from "../middlewares/rate-limit.middleware.js";
 import { and, eq } from "drizzle-orm";
 
 const router = express.Router();
 
-router.post("/shorten", ensureAuthenticated, async function (req, res) {
+router.post("/shorten", ensureAuthenticated, shortenRateLimit, async function (req, res) {
   const validationResult = await shortenPostRequestBodySchema.safeParseAsync(
     req.body,
   );
@@ -90,10 +91,32 @@ router.patch("/:id", ensureAuthenticated, async function (req, res) {
   return res.json(updated);
 });
 
+router.get("/:id/stats", ensureAuthenticated, async function (req, res) {
+  const [url] = await db
+    .select({ id: urlsTable.id })
+    .from(urlsTable)
+    .where(and(eq(urlsTable.id, req.params.id), eq(urlsTable.userId, req.user.id)));
+
+  if (!url)
+    return res.status(404).json({ error: "URL not found or not owned by you" });
+
+  const clicks = await db
+    .select({
+      clickedAt: clicksTable.clickedAt,
+      userAgent: clicksTable.userAgent,
+      ipAddress: clicksTable.ipAddress,
+    })
+    .from(clicksTable)
+    .where(eq(clicksTable.urlId, req.params.id));
+
+  return res.json({ totalClicks: clicks.length, clicks });
+});
+
 router.get("/:shortCode", async function (req, res) {
   const code = req.params.shortCode;
   const [result] = await db
     .select({
+      id: urlsTable.id,
       targetURL: urlsTable.targetURL,
     })
     .from(urlsTable)
@@ -102,6 +125,12 @@ router.get("/:shortCode", async function (req, res) {
   if (!result) {
     return res.status(404).json({ error: "Invalid url" });
   }
+
+  await db.insert(clicksTable).values({
+    urlId: result.id,
+    userAgent: req.headers["user-agent"] ?? null,
+    ipAddress: req.ip ?? null,
+  });
 
   return res.redirect(result.targetURL);
 });

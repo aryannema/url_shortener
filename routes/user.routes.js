@@ -7,12 +7,12 @@ import {
 } from "../validation/request.validation.js";
 import { hashPasswordWithSalt } from "../utils/hash.js";
 import { getUserByEmail } from "../services/user.service.js";
-import { error } from "node:console";
 import { createUserToken } from "../utils/token.js";
+import { authRateLimit } from "../middlewares/rate-limit.middleware.js";
 
 const router = express.Router();
 
-router.post("/signup", async (req, res) => {
+router.post("/signup", authRateLimit, async (req, res) => {
   const validationResult = await signupPostRequestBodySchema.safeParseAsync(
     req.body,
   );
@@ -42,10 +42,10 @@ router.post("/signup", async (req, res) => {
     })
     .returning({ id: usersTable.id });
 
-  return res.status(201).json({ data: { userId: user.id } });
+  return res.status(201).json({ data: { userId: user[0].id } });
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", authRateLimit, async (req, res) => {
   const validationResult = await loginPostRequestBodySchema.safeParseAsync(
     req.body,
   );
