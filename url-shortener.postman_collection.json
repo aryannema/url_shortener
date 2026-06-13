@@ -1,0 +1,322 @@
+{
+  "info": {
+    "name": "URL Shortener API",
+    "description": "Complete API collection for the URL Shortener. Import this file into Postman to test all endpoints.\n\nSetup:\n1. Set the `baseUrl` variable to your deployed URL or http://localhost:8000\n2. Run 'Signup' then 'Login' — the token is saved automatically\n3. All protected routes use the token automatically",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://urlshortener-production-71f0.up.railway.app",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "urlId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "shortCode",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Aryan\",\n  \"lastName\": \"Nema\",\n  \"email\": \"aryan@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "signup"]
+            },
+            "description": "Creates a new user account. Returns the new user's ID."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"data\": {\n    \"userId\": \"b3d2a1c0-1234-5678-abcd-ef0123456789\"\n  }\n}"
+            },
+            {
+              "name": "400 Duplicate Email",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"User with email already exists\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  console.log('Token saved automatically.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"aryan@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/user/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["user", "login"]
+            },
+            "description": "Authenticates a user and returns a JWT. The token is automatically saved to the `token` collection variable — all protected routes will use it from here."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiJ9.eyJpZCI6ImIzZDJhMWMwIn0.abc123\"\n}"
+            },
+            {
+              "name": "400 Wrong Password",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"Invalid password\"\n}"
+            },
+            {
+              "name": "404 User Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"User with email aryan@example.com does not exist\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "URLs",
+      "item": [
+        {
+          "name": "Shorten URL",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) {",
+                  "  pm.collectionVariables.set('urlId', json.id);",
+                  "  pm.collectionVariables.set('shortCode', json.shortCode);",
+                  "  console.log('URL id and shortCode saved automatically.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://github.com/aryannema/url_shortener\",\n  \"code\": \"myrepo\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/shorten",
+              "host": ["{{baseUrl}}"],
+              "path": ["shorten"]
+            },
+            "description": "Creates a short URL. `code` is optional — if omitted a random 6-character code is generated. The returned `id` and `shortCode` are saved automatically for use in later requests."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": \"a1b2c3d4-0000-1111-2222-333344445555\",\n  \"shortCode\": \"myrepo\",\n  \"targetURL\": \"https://github.com/aryannema/url_shortener\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"You must be logged in to access this resource\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get My URLs",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/codes",
+              "host": ["{{baseUrl}}"],
+              "path": ["codes"]
+            },
+            "description": "Returns all short URLs belonging to the authenticated user."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"codes\": [\n    {\n      \"id\": \"a1b2c3d4-...\",\n      \"code\": \"myrepo\",\n      \"target_url\": \"https://github.com/aryannema/url_shortener\",\n      \"user_id\": \"b3d2a1c0-...\",\n      \"created_at\": \"2026-06-13T07:00:00.000Z\",\n      \"updated_at\": null\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update URL",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://github.com/aryannema\",\n  \"code\": \"myprofile\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/{{urlId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{urlId}}"]
+            },
+            "description": "Updates the target URL and/or short code. At least one field required. Uses the `urlId` saved from 'Shorten URL'."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": \"a1b2c3d4-...\",\n  \"shortCode\": \"myprofile\",\n  \"targetURL\": \"https://github.com/aryannema\"\n}"
+            },
+            {
+              "name": "404 Not Found or Wrong Owner",
+              "status": "Not Found",
+              "code": 404,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"URL not found or not owned by you\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get URL Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{urlId}}/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{urlId}}", "stats"]
+            },
+            "description": "Returns total click count and per-click details (timestamp, user agent, IP) for a URL you own."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"totalClicks\": 3,\n  \"clicks\": [\n    {\n      \"clickedAt\": \"2026-06-13T08:30:00.000Z\",\n      \"userAgent\": \"Mozilla/5.0 ...\",\n      \"ipAddress\": \"203.0.113.42\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete URL",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/{{urlId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{urlId}}"]
+            },
+            "description": "Deletes a short URL you own. All associated click records are removed automatically."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"deleted\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Redirect (visit short URL)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/{{shortCode}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["{{shortCode}}"]
+            },
+            "description": "Visits a short URL. Records a click (timestamp, user agent, IP) and redirects to the original URL. No auth required — this is the public endpoint."
+          },
+          "response": [
+            {
+              "name": "302 Redirect",
+              "status": "Found",
+              "code": 302,
+              "header": [{ "key": "Location", "value": "https://original-destination.com" }],
+              "body": ""
+            },
+            {
+              "name": "404 Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"error\": \"Invalid url\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

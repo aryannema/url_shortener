@@ -2,6 +2,10 @@
 
 A production-ready REST API for shortening URLs, built with Node.js and PostgreSQL. Users can register, create short links, track every click on their links, and manage their URLs — all behind JWT-based authentication.
 
+**Live API:** https://urlshortener-production-71f0.up.railway.app
+
+**Try it instantly:** Import `url-shortener.postman_collection.json` into Postman — every route is pre-configured with example bodies and the token is saved automatically after login.
+
 ---
 
 ## Table of Contents
